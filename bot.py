@@ -28,11 +28,11 @@ if not os.path.exists(PARTICIPANTS_FILE):
 
 # Загрузка/создание конфигурации
 DEFAULT_CONFIG = {
-    "start_text": "привет! ты на пути к крутому призу за то, что ты крутой, а еще в честь релиза «».\n\n🎁 за пресейв ты участвуешь в розыгрыше",
-    "button_text": "✅ сделать пресейв и получить награды",
-    "instruction_text": "1️⃣ сделай пресейв по ссылке  (нужно отключить VPN!)\n2️⃣ как сделал:а, отправь скриншот, где видно, что пресейвы есть\n\nжду скриншот следующим сообщением: после этого ты будешь участвовать в розыгрыше!",
-    "thank_you_text": "ты участвуешь в розыгрыше",
-    "broadcast_text": "ТРЕК \"\" УЖЕ В СЕТИ!\nпослушать: ",
+    "start_text": "",
+    "button_text": "",
+    "instruction_text": "",
+    "thank_you_text": "",
+    "broadcast_text": "",
     "broadcast_date": "",
     "winners_count": 1
 }
@@ -49,13 +49,11 @@ def save_config(config):
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
 
-# Переменные для кэша (необязательно)
 config = load_config()
 
 # ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 def get_broadcast_datetime():
     dt = datetime.fromisoformat(config["broadcast_date"])
-    # если нет часового пояса, назначаем UTC+3
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone(timedelta(hours=3)))
     return dt
@@ -99,10 +97,6 @@ class PresaveState(StatesGroup):
 
 class AdminCheckState(StatesGroup):
     waiting_user_id = State()
-
-class AdminSetTextState(StatesGroup):
-    waiting_field = State()
-    waiting_value = State()
 
 # ========== ФУНКЦИЯ РАССЫЛКИ ==========
 async def send_broadcast():
@@ -156,6 +150,7 @@ async def schedule_broadcast():
         await asyncio.sleep(wait_seconds)
         await send_broadcast()
 
+# ========== БОТ И ДИСПЕТЧЕР ==========
 bot = Bot(token=BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
@@ -348,12 +343,10 @@ async def admin_settings(message: types.Message):
 @dp.message(Command("set_start_text"))
 async def set_start_text(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     new_text = message.text.replace("/set_start_text", "").strip()
     if not new_text:
-        await message.answer("Укажите текст после команды.")
-        return
+        await message.answer("Укажите текст после команды."); return
     config["start_text"] = new_text
     save_config(config)
     await message.answer("✅ Текст приветствия обновлён.")
@@ -361,26 +354,21 @@ async def set_start_text(message: types.Message):
 @dp.message(Command("set_button_text"))
 async def set_button_text(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     new_text = message.text.replace("/set_button_text", "").strip()
     if not new_text:
-        await message.answer("Укажите текст после команды.")
-        return
+        await message.answer("Укажите текст после команды."); return
     config["button_text"] = new_text
     save_config(config)
-    # Обновляем клавиатуру (но она обновится только при новом старте или при следующем вызове start)
     await message.answer("✅ Текст кнопки обновлён. Для обновления клавиатуры перезапустите бота или используйте /start.")
 
 @dp.message(Command("set_instruction_text"))
 async def set_instruction_text(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     new_text = message.text.replace("/set_instruction_text", "").strip()
     if not new_text:
-        await message.answer("Укажите текст после команды.")
-        return
+        await message.answer("Укажите текст после команды."); return
     config["instruction_text"] = new_text
     save_config(config)
     await message.answer("✅ Текст инструкции обновлён.")
@@ -388,12 +376,10 @@ async def set_instruction_text(message: types.Message):
 @dp.message(Command("set_thank_you_text"))
 async def set_thank_you_text(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     new_text = message.text.replace("/set_thank_you_text", "").strip()
     if not new_text:
-        await message.answer("Укажите текст после команды.")
-        return
+        await message.answer("Укажите текст после команды."); return
     config["thank_you_text"] = new_text
     save_config(config)
     await message.answer("✅ Текст благодарности обновлён.")
@@ -401,12 +387,10 @@ async def set_thank_you_text(message: types.Message):
 @dp.message(Command("set_broadcast_text"))
 async def set_broadcast_text(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     new_text = message.text.replace("/set_broadcast_text", "").strip()
     if not new_text:
-        await message.answer("Укажите текст после команды.")
-        return
+        await message.answer("Укажите текст после команды."); return
     config["broadcast_text"] = new_text
     save_config(config)
     await message.answer("✅ Текст рассылки обновлён.")
@@ -414,8 +398,7 @@ async def set_broadcast_text(message: types.Message):
 @dp.message(Command("set_broadcast_date"))
 async def set_broadcast_date(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     date_str = message.text.replace("/set_broadcast_date", "").strip()
     try:
         dt = datetime.fromisoformat(date_str)
@@ -424,7 +407,7 @@ async def set_broadcast_date(message: types.Message):
         config["broadcast_date"] = dt.isoformat()
         save_config(config)
         await message.answer(f"✅ Дата рассылки установлена: {dt.strftime('%d.%m.%Y %H:%M')} МСК")
-        # Сбросим флаг отправки, чтобы рассылка могла сработать заново
+        # Сбросим флаг отправки
         broadcast_sent_file = os.path.join(DATA_DIR, "broadcast_sent.txt")
         with open(broadcast_sent_file, 'w', encoding='utf-8') as f:
             f.write("False")
@@ -435,8 +418,7 @@ async def set_broadcast_date(message: types.Message):
 @dp.message(Command("set_winners"))
 async def set_winners(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     try:
         count = int(message.text.replace("/set_winners", "").strip())
         if count < 1:
@@ -450,8 +432,7 @@ async def set_winners(message: types.Message):
 @dp.message(F.text == "❌ Скрыть меню")
 async def admin_hide(message: types.Message, state: FSMContext):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     await state.clear()
     await message.answer("Меню скрыто", reply_markup=ReplyKeyboardRemove())
 
@@ -459,22 +440,19 @@ async def admin_hide(message: types.Message, state: FSMContext):
 @dp.message(Command("participants"))
 async def participants_cmd(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     await admin_participants(message)
 
 @dp.message(Command("draw"))
 async def draw_cmd(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     await admin_draw(message)
 
 @dp.message(Command("check"))
 async def check_cmd(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     args = message.text.split(maxsplit=1)
     if len(args) < 2:
         await message.answer("использование: /check <id или @username>")
@@ -495,8 +473,7 @@ async def check_cmd(message: types.Message):
 @dp.message(Command("broadcast"))
 async def manual_broadcast(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     broadcast_sent_file = os.path.join(DATA_DIR, "broadcast_sent.txt")
     if os.path.exists(broadcast_sent_file):
         with open(broadcast_sent_file, 'r', encoding='utf-8') as f:
@@ -513,8 +490,7 @@ async def manual_broadcast(message: types.Message):
 @dp.message(Command("time_to_broadcast"))
 async def time_to_broadcast_cmd(message: types.Message):
     if message.from_user.id not in ADMIN_IDS:
-        await message.answer("нет прав ))")
-        return
+        await message.answer("нет прав ))"); return
     await admin_time_to_broadcast(message)
 
 # ========== ЗАПУСК ==========
