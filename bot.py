@@ -156,6 +156,10 @@ async def schedule_broadcast():
         await asyncio.sleep(wait_seconds)
         await send_broadcast()
 
+bot = Bot(token=BOT_TOKEN)
+storage = MemoryStorage()
+dp = Dispatcher(storage=storage)
+
 # ========== ОБЩИЕ КОМАНДЫ ==========
 @dp.message(Command("start"))
 async def start_cmd(message: types.Message):
