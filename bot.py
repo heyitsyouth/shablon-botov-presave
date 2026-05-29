@@ -15,7 +15,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN не задан")
 
-ADMIN_IDS = [513528979, 1036983371]   # замените на свои ID
+ADMIN_IDS = [513528979]   # замените на свои ID
 
 DATA_DIR = "data"
 SCREENSHOT_DIR = os.path.join(DATA_DIR, "screenshots")
