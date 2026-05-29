@@ -15,7 +15,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN не задан")
 
-ADMIN_IDS = [513528979]   # замените на свои ID
+ADMIN_IDS = [513528979, 1036983371]   # замените на свои ID
 
 DATA_DIR = "data"
 SCREENSHOT_DIR = os.path.join(DATA_DIR, "screenshots")
@@ -37,13 +37,23 @@ DEFAULT_CONFIG = {
     "winners_count": 1
 }
 
-if not os.path.exists(CONFIG_FILE):
-    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-        json.dump(DEFAULT_CONFIG, f, indent=2, ensure_ascii=False)
-
 def load_config():
+    if not os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(DEFAULT_CONFIG, f, indent=2, ensure_ascii=False)
+        return DEFAULT_CONFIG.copy()
     with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
+        config = json.load(f)
+    # Убедимся, что все поля из DEFAULT_CONFIG присутствуют и не пустые
+    updated = False
+    for key, default_value in DEFAULT_CONFIG.items():
+        if key not in config or config[key] == "":
+            config[key] = default_value
+            updated = True
+    if updated:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+    return config
 
 def save_config(config):
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
@@ -53,7 +63,13 @@ config = load_config()
 
 # ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 def get_broadcast_datetime():
-    dt = datetime.fromisoformat(config["broadcast_date"])
+    date_str = config.get("broadcast_date", "")
+    if not date_str:
+        date_str = DEFAULT_CONFIG["broadcast_date"]
+    try:
+        dt = datetime.fromisoformat(date_str)
+    except ValueError:
+        dt = datetime.fromisoformat(DEFAULT_CONFIG["broadcast_date"])
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone(timedelta(hours=3)))
     return dt
@@ -133,7 +149,11 @@ async def send_broadcast():
     print(f"Рассылка завершена. Отправлено {count} сообщений.")
 
 async def schedule_broadcast():
-    target = get_broadcast_datetime()
+    try:
+        target = get_broadcast_datetime()
+    except Exception as e:
+        print(f"Ошибка при определении даты рассылки: {e}")
+        return
     now = datetime.now(timezone(timedelta(hours=3)))
     if now >= target:
         broadcast_sent_file = os.path.join(DATA_DIR, "broadcast_sent.txt")
@@ -251,7 +271,6 @@ async def admin_draw(message: types.Message):
             uid, name, uname = parts[0], parts[1], parts[2]
             result_text += f"{idx}. {name} (@{uname}) – ID {uid}\n"
     await message.answer(result_text)
-    # Отправляем скриншоты победителей (по желанию, можно отключить)
     for w in winners:
         parts = w.strip().split('|')
         if len(parts) >= 4:
@@ -407,7 +426,6 @@ async def set_broadcast_date(message: types.Message):
         config["broadcast_date"] = dt.isoformat()
         save_config(config)
         await message.answer(f"✅ Дата рассылки установлена: {dt.strftime('%d.%m.%Y %H:%M')} МСК")
-        # Сбросим флаг отправки
         broadcast_sent_file = os.path.join(DATA_DIR, "broadcast_sent.txt")
         with open(broadcast_sent_file, 'w', encoding='utf-8') as f:
             f.write("False")
