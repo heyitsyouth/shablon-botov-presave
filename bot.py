@@ -33,7 +33,7 @@ DEFAULT_CONFIG = {
     "instruction_text": "",
     "thank_you_text": "",
     "broadcast_text": "",
-    "broadcast_date": "",
+    "broadcast_date": "2026-05-29T12:00:00+03:00",
     "winners_count": 1
 }
 
