@@ -58,8 +58,6 @@ async def receive_screenshot(
     username=username,
     full_name=full_name,
     screenshot_path=path,
-    telegram_file_id=photo.file_id,
-    telegram_file_unique_id=photo.file_unique_id,
     )
 
     logger.info(
