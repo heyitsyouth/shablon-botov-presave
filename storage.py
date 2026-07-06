@@ -15,11 +15,12 @@ from __future__ import annotations
 
 import io
 import logging
-import uuid
+
+from datetime import datetime
 from pathlib import Path
 
 from aiogram import Bot
-from PIL import Image
+from PIL import Image, ImageOps
 
 from config import (
     SCREENSHOTS_DIR,
@@ -42,37 +43,46 @@ except ImportError:
 class Storage:
 
     def __init__(self):
-
         self.use_s3 = USE_S3
 
-    async def save_photo(
-
+    async def save_file(
         self,
-
         bot: Bot,
-
         file_id: str,
-
+        user_id: int,
     ) -> str:
-
         """
-        Главный метод.
-
-        Скачивает фото,
-        уменьшает,
-        сохраняет,
-        возвращает путь.
+        Сохраняет изображение пользователя.
         """
 
-        file = await bot.get_file(file_id)
+        telegram_file = await bot.get_file(file_id)
 
-        file_bytes = await bot.download_file(file.file_path)
+        file_bytes = await bot.download_file(
+            telegram_file.file_path
+        )
 
         image = Image.open(file_bytes)
 
         image = self._prepare(image)
 
-        filename = f"{uuid.uuid4().hex}.jpg"
+        now = datetime.now()
+
+        folder = (
+            SCREENSHOTS_DIR
+            / f"{now:%Y}"
+            / f"{now:%m}"
+            / f"{now:%d}"
+        )
+
+        folder.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        filename = (
+            f"{user_id}_"
+            f"{now:%Y%m%d_%H%M%S}.jpg"
+        )
 
         if self.use_s3:
 
@@ -83,7 +93,21 @@ class Storage:
 
         return self._save_local(
             image,
+            folder,
             filename,
+        )
+
+    async def save_photo(
+        self,
+        bot: Bot,
+        file_id: str,
+        user_id: int,
+    ) -> str:
+
+        return await self.save_file(
+            bot,
+            file_id,
+            user_id,
         )
 
     def _prepare(
@@ -91,82 +115,49 @@ class Storage:
         image: Image.Image,
     ) -> Image.Image:
 
-        """
-        Подготовка изображения.
-
-        Мы НЕ делаем сильное сжатие.
-
-        Основная цель —
-        чтобы текст оставался читаемым.
-        """
+        image = ImageOps.exif_transpose(image)
 
         image = image.convert("RGB")
 
-        max_size = 1800
-
         image.thumbnail(
             (
-                max_size,
-                max_size,
+                1800,
+                1800,
             )
         )
 
         return image
 
     def _save_local(
-
         self,
-
         image: Image.Image,
-
+        folder: Path,
         filename: str,
-
     ) -> str:
 
-        path = SCREENSHOTS_DIR / filename
+        path = folder / filename
 
         image.save(
-
             path,
-
             format="JPEG",
-
             quality=90,
-
             optimize=True,
-
         )
 
         logger.info(
-
             "Screenshot saved: %s",
-
             path,
-
         )
 
         return str(path)
 
     async def _save_s3(
-
         self,
-
         image: Image.Image,
-
         filename: str,
-
     ) -> str:
 
-        """
-        Загрузка в S3.
-
-        Вызывается
-        только если
-        USE_S3=True.
-        """
-
         if get_session is None:
-
             raise RuntimeError(
                 "aiobotocore is not installed."
             )
@@ -174,15 +165,10 @@ class Storage:
         buffer = io.BytesIO()
 
         image.save(
-
             buffer,
-
             format="JPEG",
-
             quality=90,
-
             optimize=True,
-
         )
 
         buffer.seek(0)
@@ -190,37 +176,23 @@ class Storage:
         session = get_session()
 
         async with session.create_client(
-
             "s3",
-
             endpoint_url=S3_ENDPOINT,
-
             region_name=S3_REGION,
-
             aws_access_key_id=S3_ACCESS_KEY,
-
             aws_secret_access_key=S3_SECRET_KEY,
-
         ) as client:
 
             await client.put_object(
-
                 Bucket=S3_BUCKET,
-
                 Key=filename,
-
                 Body=buffer.getvalue(),
-
                 ContentType="image/jpeg",
-
             )
 
         logger.info(
-
             "Screenshot uploaded to S3: %s",
-
             filename,
-
         )
 
         return filename
