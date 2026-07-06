@@ -1,5 +1,7 @@
 {
   "check_subscription": false,
+
+  "presave_url": "",
   
   "start_text": "Привет! Участвуй в розыгрыше 🎉",
 
