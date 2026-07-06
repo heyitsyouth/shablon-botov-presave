@@ -1,0 +1,17 @@
+{
+  "start_text": "Привет! Участвуй в розыгрыше 🎉",
+
+  "button_text": "✅ Отправить скриншот",
+
+  "instruction_text": "1. Сделай пресейв\n2. Сделай скриншот\n3. Отправь его сюда",
+
+  "thank_you_text": "Спасибо! Ты участвуешь в розыгрыше.",
+
+  "broadcast_text": "Розыгрыш завершён!",
+
+  "broadcast_date": "2026-12-31T20:00:00+03:00",
+
+  "winners_count": 1,
+
+  "auto_draw_after_broadcast": true
+}
