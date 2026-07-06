@@ -1,21 +1,37 @@
 {
-  "check_subscription": false,
+  "contest": {
 
-  "presave_url": "",
-  
-  "start_text": "Привет! Участвуй в розыгрыше 🎉",
+    "title": "Розыгрыш Aviasales",
 
-  "button_text": "✅ Отправить скриншот",
+    "presave_url": "",
 
-  "instruction_text": "1. Сделай пресейв\n2. Сделай скриншот\n3. Отправь его сюда",
+    "check_subscription": false,
 
-  "thank_you_text": "Спасибо! Ты участвуешь в розыгрыше.",
+    "required_channels": [],
 
-  "broadcast_text": "Розыгрыш завершён!",
+    "texts": {
 
-  "broadcast_date": "2026-12-31T20:00:00+03:00",
+      "start": "...",
 
-  "winners_count": 1,
+      "instruction": "...",
 
-  "auto_draw_after_broadcast": true
+      "button": "...",
+
+      "thanks": "...",
+
+      "broadcast": "..."
+
+    },
+
+    "draw": {
+
+      "date": "...",
+
+      "winner_count": 1,
+
+      "auto_draw": true
+
+    }
+
+  }
 }
