@@ -1,10 +1,6 @@
 """
 handlers/screenshots.py
-
-Прием скриншотов от пользователей.
 """
-
-from __future__ import annotations
 
 from aiogram import Router, F
 from aiogram.types import Message
@@ -18,32 +14,28 @@ from config import CONFIG
 router = Router()
 
 
-@router.message(UserStates.waiting_screenshot, F.photo)
-async def receive_screenshot(
+async def register_user(
     message: Message,
     state: FSMContext,
+    file_id: str,
+    unique_id: str,
 ):
-    """
-    Получение скриншота.
-    """
 
     user = message.from_user
 
     if await db.participant_exists(user.id):
 
         await message.answer(
-            "✅ Вы уже участвуете в этом розыгрыше."
+            "✅ Вы уже участвуете в розыгрыше."
         )
 
         await state.clear()
 
         return
 
-    photo = message.photo[-1]
-
-    screenshot_path = await storage.save_photo(
+    screenshot_path = await storage.save_file(
         bot=message.bot,
-        file_id=photo.file_id,
+        file_id=file_id,
     )
 
     full_name = " ".join(
@@ -61,8 +53,8 @@ async def receive_screenshot(
         username=user.username,
         full_name=full_name,
         screenshot_path=screenshot_path,
-        telegram_file_id=photo.file_id,
-        telegram_file_unique_id=photo.file_unique_id,
+        telegram_file_id=file_id,
+        telegram_file_unique_id=unique_id,
     )
 
     await state.clear()
@@ -72,14 +64,63 @@ async def receive_screenshot(
     )
 
 
+@router.message(
+    UserStates.waiting_screenshot,
+    F.photo,
+)
+async def receive_photo(
+    message: Message,
+    state: FSMContext,
+):
+
+    photo = message.photo[-1]
+
+    await register_user(
+        message,
+        state,
+        photo.file_id,
+        photo.file_unique_id,
+    )
+
+
+@router.message(
+    UserStates.waiting_screenshot,
+    F.document,
+)
+async def receive_document(
+    message: Message,
+    state: FSMContext,
+):
+
+    document = message.document
+
+    if not document.mime_type:
+        await message.answer(
+            "Отправьте изображение."
+        )
+        return
+
+    if not document.mime_type.startswith("image/"):
+
+        await message.answer(
+            "❌ Можно отправить только изображение."
+        )
+
+        return
+
+    await register_user(
+        message,
+        state,
+        document.file_id,
+        document.file_unique_id,
+    )
+
+
 @router.message(UserStates.waiting_screenshot)
-async def not_photo(
+async def invalid_file(
     message: Message,
 ):
-    """
-    Если пользователь отправил не фотографию.
-    """
 
     await message.answer(
-        "❌ Пожалуйста, отправьте именно скриншот как фотографию."
+        "❌ Пришлите скриншот как фотографию или изображение."
     )
