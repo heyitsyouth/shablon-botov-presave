@@ -1,19 +1,16 @@
 """
-Все клавиатуры бота.
+keyboards/keyboards.py
 
-Никакой логики здесь быть не должно —
-только создание клавиатур.
+Все клавиатуры проекта.
 """
 
 from aiogram.types import (
-    InlineKeyboardButton,
     InlineKeyboardMarkup,
+    InlineKeyboardButton,
 )
 
-from config import CONFIG
 
-
-def get_start_keyboard() -> InlineKeyboardMarkup:
+def get_start_keyboard(url: str) -> InlineKeyboardMarkup:
     """
     Главное меню пользователя.
     """
@@ -22,30 +19,16 @@ def get_start_keyboard() -> InlineKeyboardMarkup:
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text=CONFIG["button_text"],
-                    callback_data="open_presave",
+                    text="🎵 Сделать пресейв",
+                    url=url,
                 )
-            ]
-        ]
-    )
-
-
-def get_subscription_keyboard() -> InlineKeyboardMarkup:
-    """
-    Клавиатура проверки подписки.
-
-    Используется только если
-    check_subscription=True.
-    """
-
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
+            ],
             [
                 InlineKeyboardButton(
-                    text="✅ Я подписался",
-                    callback_data="check_subscription",
+                    text="✅ Отправить скриншот",
+                    callback_data="send_screenshot",
                 )
-            ]
+            ],
         ]
     )
 
@@ -78,30 +61,26 @@ def get_admin_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(
                     text="📊 Статистика",
                     callback_data="admin_stats",
-                )
-            ],
-            [
+                ),
                 InlineKeyboardButton(
-                    text="📝 Изменить тексты",
-                    callback_data="admin_texts",
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="📅 Дата розыгрыша",
-                    callback_data="admin_draw_date",
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="👥 Победители",
+                    text="🎲 Розыгрыш",
                     callback_data="admin_draw",
-                )
+                ),
             ],
             [
+                InlineKeyboardButton(
+                    text="📝 Тексты",
+                    callback_data="admin_texts",
+                ),
                 InlineKeyboardButton(
                     text="📣 Рассылка",
                     callback_data="admin_broadcast",
+                ),
+            ],
+            [
+                InlineKeyboardButton(
+                    text="📥 Скачать CSV",
+                    callback_data="admin_export_csv",
                 )
             ],
         ]
