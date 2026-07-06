@@ -54,10 +54,12 @@ async def receive_screenshot(
     full_name = message.from_user.full_name
 
     await db.add_participant(
-        user_id=message.from_user.id,
-        username=username,
-        full_name=full_name,
-        screenshot_path=path,
+    user_id=message.from_user.id,
+    username=username,
+    full_name=full_name,
+    screenshot_path=path,
+    telegram_file_id=photo.file_id,
+    telegram_file_unique_id=photo.file_unique_id,
     )
 
     logger.info(
