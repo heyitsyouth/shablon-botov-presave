@@ -1,28 +1,24 @@
 """
 handlers/screenshots.py
 
-Приём скриншотов пользователя.
+Прием скриншотов от пользователей.
 """
 
 from __future__ import annotations
 
-import logging
-
-from aiogram import F, Router
-from aiogram.fsm.context import FSMContext
+from aiogram import Router, F
 from aiogram.types import Message
+from aiogram.fsm.context import FSMContext
 
-from config import CONFIG
 from database import db
-from states import UserStates
 from storage import storage
-
-logger = logging.getLogger(__name__)
+from states import UserStates
+from config import CONFIG
 
 router = Router()
 
 
-@router.message(UserStates.waiting_for_screenshot, F.photo)
+@router.message(UserStates.waiting_screenshot, F.photo)
 async def receive_screenshot(
     message: Message,
     state: FSMContext,
@@ -31,11 +27,12 @@ async def receive_screenshot(
     Получение скриншота.
     """
 
-    if await db.participant_exists(message.from_user.id):
+    user = message.from_user
+
+    if await db.participant_exists(user.id):
 
         await message.answer(
-            "Вы уже зарегистрированы "
-            "в розыгрыше."
+            "✅ Вы уже участвуете в этом розыгрыше."
         )
 
         await state.clear()
@@ -44,45 +41,45 @@ async def receive_screenshot(
 
     photo = message.photo[-1]
 
-    path = await storage.save_photo(
-        message.bot,
-        photo.file_id,
+    screenshot_path = await storage.save_photo(
+        bot=message.bot,
+        file_id=photo.file_id,
     )
 
-    username = message.from_user.username
-
-    full_name = message.from_user.full_name
+    full_name = " ".join(
+        filter(
+            None,
+            [
+                user.first_name,
+                user.last_name,
+            ],
+        )
+    )
 
     await db.add_participant(
-    user_id=message.from_user.id,
-    username=username,
-    full_name=full_name,
-    screenshot_path=path,
+        user_id=user.id,
+        username=user.username,
+        full_name=full_name,
+        screenshot_path=screenshot_path,
+        telegram_file_id=photo.file_id,
+        telegram_file_unique_id=photo.file_unique_id,
     )
 
-    logger.info(
-        "New participant: %s",
-        message.from_user.id,
-    )
+    await state.clear()
 
     await message.answer(
         CONFIG["thank_you_text"]
     )
 
-    await state.clear()
 
-
-@router.message(UserStates.waiting_for_screenshot)
-async def wrong_message(
+@router.message(UserStates.waiting_screenshot)
+async def not_photo(
     message: Message,
 ):
     """
-    Пользователь отправил
-    не фотографию.
+    Если пользователь отправил не фотографию.
     """
 
     await message.answer(
-        "Пожалуйста, отправьте "
-        "именно фотографию "
-        "со скриншотом пресейва."
+        "❌ Пожалуйста, отправьте именно скриншот как фотографию."
     )
