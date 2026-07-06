@@ -1,0 +1,36 @@
+# Python
+
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtualenv
+
+venv/
+.venv/
+
+# Environment
+
+.env
+
+# Screenshots
+
+data/screenshots/
+
+# Logs
+
+logs/
+
+# IDE
+
+.idea/
+.vscode/
+
+# OS
+
+.DS_Store
+Thumbs.db
+
+# Database dumps
+
+*.sql
