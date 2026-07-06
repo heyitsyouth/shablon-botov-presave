@@ -13,5 +13,7 @@
 
   "winners_count": 1,
 
-  "auto_draw_after_broadcast": true
+  "auto_draw_after_broadcast": true,
+
+  "check_subscription": false
 }
