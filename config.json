@@ -1,4 +1,6 @@
 {
+  "check_subscription": false,
+  
   "start_text": "Привет! Участвуй в розыгрыше 🎉",
 
   "button_text": "✅ Отправить скриншот",
@@ -13,7 +15,5 @@
 
   "winners_count": 1,
 
-  "auto_draw_after_broadcast": true,
-
-  "check_subscription": false
+  "auto_draw_after_broadcast": true
 }
