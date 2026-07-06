@@ -2,342 +2,298 @@
 database.py
 
 Работа с PostgreSQL.
-
-В этом модуле находится весь доступ к базе данных.
-Никакой SQL в handlers быть не должно.
 """
 
 from __future__ import annotations
 
-import logging
-from typing import Optional
-
 import asyncpg
 
-from config import DATABASE_URL
-
-logger = logging.getLogger(__name__)
+from config import (
+    DB_HOST,
+    DB_PORT,
+    DB_NAME,
+    DB_USER,
+    DB_PASSWORD,
+)
 
 
 class Database:
-    def __init__(self) -> None:
-        self.pool: Optional[asyncpg.Pool] = None
 
-    async def connect(self) -> None:
-        """
-        Создает пул соединений.
-        """
+    def __init__(self):
 
-        if self.pool is not None:
-            return
+        self.pool = None
+
+    # ----------------------------------------
+    # Подключение
+    # ----------------------------------------
+
+    async def connect(self):
 
         self.pool = await asyncpg.create_pool(
-            DATABASE_URL,
-            min_size=5,
-            max_size=20,
-            command_timeout=30,
-            max_inactive_connection_lifetime=300,
+
+            host=DB_HOST,
+            port=DB_PORT,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASSWORD,
+
+            min_size=1,
+            max_size=10,
+
         )
 
-        logger.info("PostgreSQL pool created.")
+        await self.create_tables()
 
-    async def close(self) -> None:
-        """
-        Закрывает пул.
-        """
+    async def close(self):
 
         if self.pool:
-
             await self.pool.close()
 
-            logger.info("PostgreSQL pool closed.")
+    # ----------------------------------------
+    # Создание таблиц
+    # ----------------------------------------
 
-    async def create_tables(self) -> None:
-        """
-        Создает таблицы.
-        """
-
-        async with self.pool.acquire() as conn:
-
-            await conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS participants (
-
-                    user_id BIGINT PRIMARY KEY,
-
-                    username TEXT,
-
-                    full_name TEXT NOT NULL,
-
-                    screenshot_path TEXT,
-
-                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
-                );
-                """
-            )
-
-            await conn.execute(
-                """
-                CREATE INDEX IF NOT EXISTS
-                idx_participants_username
-
-                ON participants(username);
-                """
-            )
-
-            await conn.execute(
-                """
-                CREATE INDEX IF NOT EXISTS
-                idx_participants_created_at
-
-                ON participants(created_at);
-                """
-            )
-
-        logger.info("Tables checked.")
-
-    async def participant_exists(self, user_id: int) -> bool:
-        """
-        Проверяет наличие участника.
-        """
+    async def create_tables(self):
 
         async with self.pool.acquire() as conn:
 
-            result = await conn.fetchval(
-                """
-                SELECT EXISTS(
+            await conn.execute("""
 
-                    SELECT 1
+            CREATE TABLE IF NOT EXISTS participants (
 
-                    FROM participants
+                id SERIAL PRIMARY KEY,
 
-                    WHERE user_id=$1
+                user_id BIGINT UNIQUE NOT NULL,
 
-                );
-                """,
-                user_id,
-            )
+                username TEXT,
 
-        return bool(result)
+                full_name TEXT,
 
-    async def add_participant(
+                screenshot_path TEXT NOT NULL,
 
+                telegram_file_id TEXT NOT NULL,
+
+                telegram_file_unique_id TEXT NOT NULL,
+
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+
+            );
+
+            """)
+
+    # ----------------------------------------
+    # Вспомогательные методы
+    # ----------------------------------------
+
+    async def execute(
         self,
-
-        user_id: int,
-
-        username: str | None,
-
-        full_name: str,
-
-        screenshot_path: str,
-
-    ) -> None:
-        """
-        Добавляет участника.
-        """
+        query: str,
+        *args,
+    ):
 
         async with self.pool.acquire() as conn:
 
-            await conn.execute(
-                """
-                INSERT INTO participants(
-
-                    user_id,
-
-                    username,
-
-                    full_name,
-
-                    screenshot_path
-
-                )
-
-                VALUES(
-
-                    $1,$2,$3,$4
-
-                )
-
-                ON CONFLICT(user_id)
-
-                DO UPDATE
-
-                SET
-
-                    username=EXCLUDED.username,
-
-                    full_name=EXCLUDED.full_name,
-
-                    screenshot_path=EXCLUDED.screenshot_path;
-                """,
-                user_id,
-                username,
-                full_name,
-                screenshot_path,
+            return await conn.execute(
+                query,
+                *args,
             )
 
-    async def get_participant(
+    async def fetch(
         self,
-        user_id: int,
-    ) -> Optional[asyncpg.Record]:
-        """
-        Получить участника.
-        """
-
-        async with self.pool.acquire() as conn:
-
-            return await conn.fetchrow(
-                """
-                SELECT *
-
-                FROM participants
-
-                WHERE user_id=$1
-                """,
-                user_id,
-            )
-
-    async def get_all(self) -> list[asyncpg.Record]:
-        """
-        Получить всех участников.
-        """
+        query: str,
+        *args,
+    ):
 
         async with self.pool.acquire() as conn:
 
             return await conn.fetch(
-                """
-                SELECT *
-
-                FROM participants
-
-                ORDER BY created_at
-                """
+                query,
+                *args,
             )
 
-    async def count(self) -> int:
-        """
-        Количество участников.
-        """
+    async def fetchrow(
+        self,
+        query: str,
+        *args,
+    ):
+
+        async with self.pool.acquire() as conn:
+
+            return await conn.fetchrow(
+                query,
+                *args,
+            )
+
+    async def fetchval(
+        self,
+        query: str,
+        *args,
+    ):
 
         async with self.pool.acquire() as conn:
 
             return await conn.fetchval(
-                """
-                SELECT COUNT(*)
-
-                FROM participants
-                """
+                query,
+                *args,
             )
 
-    async def search(
-        self,
-        query: str,
-    ) -> Optional[asyncpg.Record]:
-        """
-        Поиск по ID или username.
-        """
+    # ----------------------------------------
+    # Участники
+    # ----------------------------------------
 
-        async with self.pool.acquire() as conn:
-
-            if query.isdigit():
-
-                return await conn.fetchrow(
-                    """
-                    SELECT *
-
-                    FROM participants
-
-                    WHERE user_id=$1
-                    """,
-                    int(query),
-                )
-
-            return await conn.fetchrow(
-                """
-                SELECT *
-
-                FROM participants
-
-                WHERE LOWER(username)=LOWER($1)
-                """,
-                query.replace("@", ""),
-            )
-
-    async def delete(
+    async def participant_exists(
         self,
         user_id: int,
-    ) -> None:
-        """
-        Удалить участника.
-        """
+    ) -> bool:
 
-        async with self.pool.acquire() as conn:
-
-            await conn.execute(
-                """
-                DELETE
-
+        result = await self.fetchval(
+            """
+            SELECT EXISTS(
+                SELECT 1
                 FROM participants
+                WHERE user_id = $1
+            );
+            """,
+            user_id,
+        )
 
-                WHERE user_id=$1
-                """,
-                user_id,
-            )
+        return bool(result)
 
-    async def draw_winners(
+    async def add_participant(
         self,
-        winners_count: int,
-    ) -> list[asyncpg.Record]:
-        """
-        Случайные победители.
-        """
+        user_id: int,
+        username: str | None,
+        full_name: str,
+        screenshot_path: str,
+        telegram_file_id: str,
+        telegram_file_unique_id: str,
+    ):
 
-        async with self.pool.acquire() as conn:
+        await self.execute(
+            """
+            INSERT INTO participants (
 
-            return await conn.fetch(
-                """
-                SELECT *
+                user_id,
+                username,
+                full_name,
+                screenshot_path,
+                telegram_file_id,
+                telegram_file_unique_id
 
-                FROM participants
-
-                ORDER BY RANDOM()
-
-                LIMIT $1
-                """,
-                winners_count,
             )
 
-    async def statistics(self) -> dict:
-        """
-        Общая статистика.
-        """
+            VALUES (
 
-        async with self.pool.acquire() as conn:
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6
 
-            total = await conn.fetchval(
-                """
-                SELECT COUNT(*)
-
-                FROM participants
-                """
             )
 
-            today = await conn.fetchval(
-                """
-                SELECT COUNT(*)
+            ON CONFLICT (user_id)
+            DO NOTHING;
+            """,
+            user_id,
+            username,
+            full_name,
+            screenshot_path,
+            telegram_file_id,
+            telegram_file_unique_id,
+        )
 
-                FROM participants
+    async def get_participant(
+        self,
+        user_id: int,
+    ):
 
-                WHERE created_at >= CURRENT_DATE
-                """
-            )
+        row = await self.fetchrow(
+            """
+            SELECT *
+            FROM participants
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+
+        if row is None:
+            return None
+
+        return dict(row)
+
+    async def get_all_participants(self):
+
+        rows = await self.fetch(
+            """
+            SELECT *
+            FROM participants
+            ORDER BY created_at ASC;
+            """
+        )
+
+        return [dict(row) for row in rows]
+
+    async def statistics(self):
+
+        total = await self.fetchval(
+            """
+            SELECT COUNT(*)
+            FROM participants;
+            """
+        )
+
+        today = await self.fetchval(
+            """
+            SELECT COUNT(*)
+            FROM participants
+            WHERE DATE(created_at) = CURRENT_DATE;
+            """
+        )
 
         return {
             "total": total,
             "today": today,
         }
 
+    async def delete_participant(
+        self,
+        user_id: int,
+    ):
 
+        await self.execute(
+            """
+            DELETE FROM participants
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+
+    async def clear_participants(self):
+
+        await self.execute(
+            """
+            TRUNCATE TABLE participants
+            RESTART IDENTITY;
+            """
+        )
+
+    async def random_winners(
+        self,
+        count: int,
+    ):
+
+        rows = await self.fetch(
+            """
+            SELECT *
+            FROM participants
+            ORDER BY RANDOM()
+            LIMIT $1;
+            """,
+            count,
+        )
+
+        return [dict(row) for row in rows]
+        
 db = Database()
