@@ -211,3 +211,37 @@ def get_subscription_keyboard() -> InlineKeyboardMarkup:
     )
 
 
+def get_draw_menu_keyboard() -> InlineKeyboardMarkup:
+
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text="📅 Изменить дату",
+                callback_data="admin_draw_edit_date_start",
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="🏆 Кол-во победителей",
+                callback_data="admin_draw_edit_count_start",
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="🎲 Запустить розыгрыш сейчас",
+                callback_data="admin_draw_now_confirm",
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="⬅️ Назад в меню",
+                callback_data="cancel",
+            )
+        ]
+    ]
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=keyboard
+    )
+
+

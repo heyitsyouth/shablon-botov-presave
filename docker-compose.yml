@@ -3,7 +3,6 @@ version: '3.8'
 services:
   bot:
     build: .
-    container_name: contest_bot
     restart: unless-stopped
     depends_on:
       db:
@@ -22,7 +21,6 @@ services:
 
   db:
     image: postgres:15-alpine
-    container_name: contest_db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
@@ -30,8 +28,6 @@ services:
       POSTGRES_DB: ${DB_NAME:-bot_db}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-bot_db}"]
       interval: 10s
