@@ -166,6 +166,24 @@ class Scheduler:
                         text=winners_text,
                         parse_mode="HTML",
                     )
+
+                    # Отправляем скриншоты победителей
+                    if participants and winners:
+                        for i, winner in enumerate(winners, start=1):
+                            username = winner.get("username")
+                            user_info = f"@{username}" if username else winner['full_name']
+                            caption = f"🏆 Победитель #{i}: {user_info} (ID: <code>{winner['user_id']}</code>)"
+                            try:
+                                await self.bot.send_photo(
+                                    chat_id=admin_id,
+                                    photo=winner['telegram_file_id'],
+                                    caption=caption,
+                                    parse_mode="HTML"
+                                )
+                            except Exception as photo_err:
+                                logger.error(
+                                    f"Failed to send winner screenshot to admin {admin_id}: {photo_err}"
+                                )
                 except Exception as e:
                     logger.error(
                         f"Failed to send auto-draw results to admin {admin_id}: {e}"

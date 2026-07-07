@@ -267,4 +267,24 @@ async def manual_draw(
         parse_mode="HTML",
         reply_markup=get_admin_keyboard()
     )
+
+    # Отправляем скриншоты победителей администратору
+    for i, winner in enumerate(winners, start=1):
+        username = winner.get("username")
+        user_info = f"@{username}" if username else winner['full_name']
+        caption = f"🏆 Победитель #{i}: {user_info} (ID: <code>{winner['user_id']}</code>)"
+        
+        try:
+            await callback.message.bot.send_photo(
+                chat_id=callback.from_user.id,
+                photo=winner['telegram_file_id'],
+                caption=caption,
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            # Fallback к текстовому сообщению в случае ошибки отправки фото
+            await callback.message.answer(
+                f"⚠️ Не удалось загрузить скриншот для победителя {user_info}: {e}"
+            )
+
     await callback.answer()

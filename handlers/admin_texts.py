@@ -14,7 +14,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 from config import ADMIN_IDS, CONFIG, save_config
-from keyboards import get_cancel_keyboard
+from keyboards import get_cancel_keyboard, get_admin_keyboard
 from states import AdminStates
 
 router = Router()
@@ -95,6 +95,12 @@ async def save_start(
         "✅ Стартовый текст обновлён."
     )
 
+    await message.answer(
+        "⚙️ <b>Панель администратора</b>",
+        parse_mode="HTML",
+        reply_markup=get_admin_keyboard(),
+    )
+
 
 @router.message(F.text == "2")
 async def edit_instruction(
@@ -128,6 +134,12 @@ async def save_instruction(
 
     await message.answer(
         "✅ Инструкция обновлена."
+    )
+
+    await message.answer(
+        "⚙️ <b>Панель администратора</b>",
+        parse_mode="HTML",
+        reply_markup=get_admin_keyboard(),
     )
 
 
@@ -165,6 +177,12 @@ async def save_thanks(
         "✅ Текст обновлён."
     )
 
+    await message.answer(
+        "⚙️ <b>Панель администратора</b>",
+        parse_mode="HTML",
+        reply_markup=get_admin_keyboard(),
+    )
+
 
 @router.message(F.text == "4")
 async def edit_url(
@@ -200,6 +218,12 @@ async def save_url(
         "✅ Ссылка обновлена."
     )
 
+    await message.answer(
+        "⚙️ <b>Панель администратора</b>",
+        parse_mode="HTML",
+        reply_markup=get_admin_keyboard(),
+    )
+
 
 @router.message(F.text == "5")
 async def edit_broadcast(
@@ -233,6 +257,12 @@ async def save_broadcast(
 
     await message.answer(
         "✅ Текст рассылки обновлён."
+    )
+
+    await message.answer(
+        "⚙️ <b>Панель администратора</b>",
+        parse_mode="HTML",
+        reply_markup=get_admin_keyboard(),
     )
 
 
