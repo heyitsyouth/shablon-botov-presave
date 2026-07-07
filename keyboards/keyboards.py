@@ -61,12 +61,23 @@ def get_start_keyboard() -> InlineKeyboardMarkup:
 
 def get_admin_keyboard() -> InlineKeyboardMarkup:
 
+    check_sub = CONFIG.get("check_subscription", False)
+
+    status_text = "🔔 Подписка: ВКЛ" if check_sub else "🔕 Подписка: ВЫКЛ"
+
     keyboard = [
 
         [
             InlineKeyboardButton(
                 text="📊 Статистика",
                 callback_data="admin_stats",
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
+                text=status_text,
+                callback_data="admin_toggle_sub",
             )
         ],
 
@@ -103,6 +114,7 @@ def get_admin_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=keyboard
     )
+
 
 
 def get_cancel_keyboard() -> InlineKeyboardMarkup:

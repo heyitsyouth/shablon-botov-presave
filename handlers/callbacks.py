@@ -34,5 +34,29 @@ async def cancel(
         "❌ Действие отменено."
     )
 
+    from config import ADMIN_IDS
+
+    if callback.from_user.id in ADMIN_IDS:
+
+        from database import db
+
+        from keyboards import get_admin_keyboard
+
+        stats = await db.statistics()
+
+        text = (
+            "⚙️ <b>Панель администратора</b>\n\n"
+            f"👥 Всего участников: <b>{stats['total']}</b>\n"
+            f"📅 Сегодня: <b>{stats['today']}</b>\n\n"
+            "Выберите действие:"
+        )
+
+        await callback.message.answer(
+            text,
+            parse_mode="HTML",
+            reply_markup=get_admin_keyboard(),
+        )
+
     await callback.answer()
+
 

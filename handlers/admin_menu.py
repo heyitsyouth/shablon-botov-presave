@@ -67,3 +67,33 @@ async def admin_stats_callback(callback: CallbackQuery):
 
     await callback.answer("Статистика обновлена.")
 
+
+@router.callback_query(F.data == "admin_toggle_sub")
+async def admin_toggle_sub_callback(callback: CallbackQuery):
+
+    if not is_admin(callback.from_user.id):
+        return
+
+    from config import save_config, CONFIG
+
+    check_sub = not CONFIG.get("check_subscription", False)
+
+    CONFIG["check_subscription"] = check_sub
+
+    save_config(CONFIG)
+
+    try:
+        await callback.message.edit_reply_markup(
+            reply_markup=get_admin_keyboard()
+        )
+    except Exception:
+        pass
+
+    status_msg = "ВКЛЮЧЕНА" if check_sub else "ВЫКЛЮЧЕНА"
+
+    await callback.answer(
+        f"Проверка подписки {status_msg}.",
+        show_alert=True,
+    )
+
+
