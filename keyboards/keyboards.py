@@ -1,87 +1,90 @@
 """
-keyboards/keyboards.py
+keyboards.py
 
 Все клавиатуры проекта.
 """
+
+from __future__ import annotations
 
 from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
 )
 
+from config import CONFIG
 
-def get_start_keyboard(url: str) -> InlineKeyboardMarkup:
-    """
-    Главное меню пользователя.
-    """
+
+# =========================================================
+# Пользователь
+# =========================================================
+
+def get_start_keyboard() -> InlineKeyboardMarkup:
+
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text=CONFIG["button_text"],
+                url=CONFIG["presave_url"],
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="📤 Отправить скриншот",
+                callback_data="send_screenshot",
+            )
+        ]
+    ]
 
     return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="🎵 Сделать пресейв",
-                    url=url,
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="✅ Отправить скриншот",
-                    callback_data="send_screenshot",
-                )
-            ],
-        ]
+        inline_keyboard=keyboard
     )
 
 
-def get_cancel_keyboard() -> InlineKeyboardMarkup:
-    """
-    Кнопка отмены.
-    """
-
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="❌ Отмена",
-                    callback_data="cancel",
-                )
-            ]
-        ]
-    )
-
+# =========================================================
+# Админ
+# =========================================================
 
 def get_admin_keyboard() -> InlineKeyboardMarkup:
-    """
-    Главное меню администратора.
-    """
+
+    keyboard = [
+
+        [
+            InlineKeyboardButton(
+                text="📊 Статистика",
+                callback_data="admin_stats",
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
+                text="📝 Тексты",
+                callback_data="admin_texts",
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
+                text="🎲 Розыгрыш",
+                callback_data="admin_draw",
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
+                text="📣 Рассылка",
+                callback_data="admin_broadcast",
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
+                text="📥 Скачать CSV",
+                callback_data="admin_export_csv",
+            )
+        ],
+
+    ]
 
     return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="📊 Статистика",
-                    callback_data="admin_stats",
-                ),
-                InlineKeyboardButton(
-                    text="🎲 Розыгрыш",
-                    callback_data="admin_draw",
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    text="📝 Тексты",
-                    callback_data="admin_texts",
-                ),
-                InlineKeyboardButton(
-                    text="📣 Рассылка",
-                    callback_data="admin_broadcast",
-                ),
-            ],
-            [
-                InlineKeyboardButton(
-                    text="📥 Скачать CSV",
-                    callback_data="admin_export_csv",
-                )
-            ],
-        ]
+        inline_keyboard=keyboard
     )
