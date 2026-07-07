@@ -28,9 +28,9 @@ async def texts_menu(callback: CallbackQuery):
         return
 
     text = (
-        "📝 <b>Редактирование текстов и каналов</b>\n\n"
+        "📝 <b>Редактирование текстов, каналов и кнопок</b>\n\n"
 
-        "Отправьте:\n\n"
+        "Отправьте номер нужного параметра:\n\n"
 
         "1 — стартовый текст\n"
 
@@ -44,7 +44,11 @@ async def texts_menu(callback: CallbackQuery):
 
         "6 — юзернейм обязательного канала (без @)\n"
 
-        "7 — название обязательного канала"
+        "7 — название обязательного канала\n"
+
+        "8 — название кнопки пресейва\n"
+
+        "9 — название кнопки скриншота"
     )
 
 
@@ -326,6 +330,98 @@ async def save_channel_title(
     from keyboards import get_admin_keyboard
     from database import db
     stats = await db.statistics()
+    await message.answer(
+        "⚙️ <b>Панель администратора</b>",
+        parse_mode="HTML",
+        reply_markup=get_admin_keyboard(),
+    )
+
+
+@router.message(F.text == "8")
+async def edit_button_text(
+    message: Message,
+    state: FSMContext,
+):
+    if message.from_user.id not in ADMIN_IDS:
+        return
+
+    await state.set_state(
+        AdminStates.waiting_button_text
+    )
+
+    await message.answer(
+        "Пришлите новое название для кнопки пресейва.\n"
+        "Например: <code>🎵 Сделать пресейв</code>",
+        parse_mode="HTML",
+        reply_markup=get_cancel_keyboard(),
+    )
+
+
+@router.message(AdminStates.waiting_button_text)
+async def save_button_text(
+    message: Message,
+    state: FSMContext,
+):
+    if message.from_user.id not in ADMIN_IDS:
+        return
+
+    text = message.text.strip()
+    CONFIG["button_text"] = text
+    save_config(CONFIG)
+    await state.clear()
+    await message.answer(
+        f"✅ Название кнопки пресейва обновлено на: <b>{text}</b>",
+        parse_mode="HTML"
+    )
+
+    # Вернем админку для удобства
+    from keyboards import get_admin_keyboard
+    await message.answer(
+        "⚙️ <b>Панель администратора</b>",
+        parse_mode="HTML",
+        reply_markup=get_admin_keyboard(),
+    )
+
+
+@router.message(F.text == "9")
+async def edit_screenshot_button_text(
+    message: Message,
+    state: FSMContext,
+):
+    if message.from_user.id not in ADMIN_IDS:
+        return
+
+    await state.set_state(
+        AdminStates.waiting_screenshot_button_text
+    )
+
+    await message.answer(
+        "Пришлите новое название для кнопки отправки скриншота.\n"
+        "Например: <code>📤 Отправить скриншот</code>",
+        parse_mode="HTML",
+        reply_markup=get_cancel_keyboard(),
+    )
+
+
+@router.message(AdminStates.waiting_screenshot_button_text)
+async def save_screenshot_button_text(
+    message: Message,
+    state: FSMContext,
+):
+    if message.from_user.id not in ADMIN_IDS:
+        return
+
+    text = message.text.strip()
+    CONFIG["screenshot_button_text"] = text
+    save_config(CONFIG)
+    await state.clear()
+    await message.answer(
+        f"✅ Название кнопки скриншота обновлено на: <b>{text}</b>",
+        parse_mode="HTML"
+    )
+
+    # Вернем админку для удобства
+    from keyboards import get_admin_keyboard
     await message.answer(
         "⚙️ <b>Панель администратора</b>",
         parse_mode="HTML",

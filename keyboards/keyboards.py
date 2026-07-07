@@ -44,7 +44,7 @@ def get_start_keyboard() -> InlineKeyboardMarkup:
 
     keyboard.append([
         InlineKeyboardButton(
-            text="📤 Отправить скриншот",
+            text=CONFIG.get("screenshot_button_text", "📤 Отправить скриншот"),
             callback_data="send_screenshot",
         )
     ])

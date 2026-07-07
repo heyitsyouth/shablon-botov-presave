@@ -43,14 +43,12 @@ async def start(
 
     await state.clear()
 
-    text = (
-        f"{CONFIG['start_text']}\n\n"
-        f"{CONFIG['instruction_text']}"
-    )
+    text = CONFIG.get('start_text', 'Добро пожаловать!')
 
     await message.answer(
         text,
         reply_markup=get_start_keyboard(),
+        parse_mode="HTML",
     )
 
 

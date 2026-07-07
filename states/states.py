@@ -32,6 +32,10 @@ class AdminStates(StatesGroup):
 
     waiting_presave_url = State()
 
+    waiting_button_text = State()
+
+    waiting_screenshot_button_text = State()
+
     waiting_broadcast_text = State()
 
     waiting_channel_username = State()
