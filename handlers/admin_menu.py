@@ -5,7 +5,7 @@ handlers/admin_menu.py
 """
 
 from aiogram import F, Router
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandObject
 from aiogram.types import CallbackQuery, Message
 
 from config import ADMIN_IDS
@@ -13,6 +13,7 @@ from database import db
 from keyboards import get_admin_keyboard
 
 router = Router()
+
 
 
 def is_admin(user_id: int) -> bool:
@@ -130,6 +131,80 @@ async def admin_view_config_callback(callback: CallbackQuery):
     )
 
     await callback.answer()
+
+
+@router.message(Command("add_admin"))
+async def add_admin_command(message: Message, command: CommandObject):
+
+    if not is_admin(message.from_user.id):
+        return
+
+    if not command.args:
+        await message.answer("Использование: <code>/add_admin ID_ПОЛЬЗОВАТЕЛЯ</code>")
+        return
+
+    try:
+        new_admin_id = int(command.args.strip())
+    except ValueError:
+        await message.answer("❌ ID пользователя должен быть числом.")
+        return
+
+    from config import CONFIG, save_config, ADMIN_IDS
+
+    admin_ids = CONFIG.get("admin_ids", [])
+
+    if new_admin_id in admin_ids:
+        await message.answer("❌ Этот пользователь уже является администратором.")
+        return
+
+    admin_ids.append(new_admin_id)
+    CONFIG["admin_ids"] = admin_ids
+    save_config(CONFIG)
+
+    # Обновляем динамический сет в памяти
+    ADMIN_IDS.add(new_admin_id)
+
+    await message.answer(f"✅ Пользователь <code>{new_admin_id}</code> успешно добавлен в администраторы.")
+
+
+@router.message(Command("del_admin"))
+async def del_admin_command(message: Message, command: CommandObject):
+
+    if not is_admin(message.from_user.id):
+        return
+
+    if not command.args:
+        await message.answer("Использование: <code>/del_admin ID_ПОЛЬЗОВАТЕЛЯ</code>")
+        return
+
+    try:
+        target_id = int(command.args.strip())
+    except ValueError:
+        await message.answer("❌ ID пользователя должен быть числом.")
+        return
+
+    from config import CONFIG, save_config, ADMIN_IDS
+
+    admin_ids = CONFIG.get("admin_ids", [])
+
+    if target_id not in admin_ids:
+        await message.answer("❌ Этот пользователь не найден в списке администраторов.")
+        return
+
+    # Защита от самоудаления
+    if target_id == message.from_user.id:
+        await message.answer("❌ Вы не можете удалить себя из списка администраторов.")
+        return
+
+    admin_ids.remove(target_id)
+    CONFIG["admin_ids"] = admin_ids
+    save_config(CONFIG)
+
+    # Обновляем динамический сет в памяти
+    ADMIN_IDS.discard(target_id)
+
+    await message.answer(f"✅ Пользователь <code>{target_id}</code> удален из списка администраторов.")
+
 
 
 

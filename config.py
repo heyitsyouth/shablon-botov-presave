@@ -116,14 +116,7 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET")
 
-# =========================================================
-# Администраторы
-# =========================================================
-
-ADMIN_IDS = {
-    6725848714,
-    513528979,
-}
+ADMIN_IDS = set()
 
 # =========================================================
 # Каналы для проверки подписки
@@ -170,6 +163,8 @@ DEFAULT_CONFIG = {
     "channel_username": "aviasales",
 
     "channel_title": "Aviasales",
+
+    "admin_ids": [6725848714, 513528979],
 }
 
 
@@ -228,3 +223,8 @@ def load_config() -> dict:
 
 
 CONFIG = load_config()
+
+# Заполняем список админов из конфига
+for admin_id in CONFIG.get("admin_ids", [6725848714, 513528979]):
+    ADMIN_IDS.add(admin_id)
+
