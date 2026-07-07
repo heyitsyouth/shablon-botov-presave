@@ -20,24 +20,39 @@ from config import CONFIG
 
 def get_start_keyboard() -> InlineKeyboardMarkup:
 
-    keyboard = [
-        [
+    presave_url = CONFIG.get("presave_url", "")
+
+    keyboard = []
+
+    if presave_url.strip():
+
+        keyboard.append([
             InlineKeyboardButton(
-                text=CONFIG["button_text"],
-                url=CONFIG["presave_url"],
+                text=CONFIG.get("button_text", "🎵 Сделать пресейв"),
+                url=presave_url,
             )
-        ],
-        [
+        ])
+
+    else:
+
+        keyboard.append([
             InlineKeyboardButton(
-                text="📤 Отправить скриншот",
-                callback_data="send_screenshot",
+                text=CONFIG.get("button_text", "🎵 Сделать пресейв"),
+                callback_data="open_presave",
             )
-        ]
-    ]
+        ])
+
+    keyboard.append([
+        InlineKeyboardButton(
+            text="📤 Отправить скриншот",
+            callback_data="send_screenshot",
+        )
+    ])
 
     return InlineKeyboardMarkup(
         inline_keyboard=keyboard
     )
+
 
 
 # =========================================================
