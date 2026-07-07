@@ -18,25 +18,13 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from config import CONFIG, ADMIN_IDS
+from config import CONFIG, ADMIN_IDS, save_config
 from database import db
 from states import AdminStates
 from utils.draw import choose_winners
 
 router = Router()
 
-
-CONFIG_PATH = "config.json"
-
-
-def save_config():
-    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
-        json.dump(
-            CONFIG,
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
 
 
 def is_admin(user_id: int) -> bool:
@@ -118,7 +106,7 @@ async def save_date(
 
     CONFIG["broadcast_date"] = message.text.strip()
 
-    save_config()
+    save_config(CONFIG)
 
     await state.clear()
 
@@ -172,7 +160,7 @@ async def save_count(
 
     CONFIG["winners_count"] = count
 
-    save_config()
+    save_config(CONFIG)
 
     await state.clear()
 

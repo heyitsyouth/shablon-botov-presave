@@ -18,7 +18,9 @@ import asyncio
 import logging
 from datetime import datetime
 
-from config import CONFIG
+from config import CONFIG, ADMIN_IDS, save_config
+from database import db
+from utils.draw import choose_winners
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,9 @@ class Scheduler:
 
         self.running = False
 
-    async def start(self):
+        self.bot = None
+
+    async def start(self, bot):
 
         """
         Запустить планировщик.
@@ -41,6 +45,8 @@ class Scheduler:
             return
 
         self.running = True
+
+        self.bot = bot
 
         self.task = asyncio.create_task(
             self._loop()
@@ -128,21 +134,49 @@ class Scheduler:
             return
 
         logger.info(
-            "Contest end reached."
+            "Contest end reached. Running auto-draw."
         )
 
-        #
-        # Здесь позже будут вызваны:
-        #
-        # await broadcast(...)
-        #
-        # await draw(...)
-        #
-        # После чего дата конкурса
-        # будет обновлена.
-        #
+        # Выбираем победителей
+        participants = await db.get_all_participants()
+        winners_count = CONFIG.get("winners_count", 1)
 
-        self.running = False
+        if not participants:
+            winners_text = "❌ <b>[Авто-розыгрыш]</b> Участники отсутствуют."
+        else:
+            winners = choose_winners(participants, winners_count)
+            winners_text = (
+                f"🏆 <b>[Авто-розыгрыш] Результаты розыгрыша:</b>\n\n"
+                f"Всего участников: <b>{len(participants)}</b>\n"
+                f"Победители:\n\n"
+            )
+            for i, winner in enumerate(winners, start=1):
+                username = winner.get("username")
+                if username:
+                    winners_text += f"{i}. @{username} (ID: <code>{winner['user_id']}</code>)\n"
+                else:
+                    winners_text += f"{i}. {winner['full_name']} (ID: <code>{winner['user_id']}</code>)\n"
+
+        # Отправляем результаты всем администраторам
+        if self.bot:
+            for admin_id in ADMIN_IDS:
+                try:
+                    await self.bot.send_message(
+                        chat_id=admin_id,
+                        text=winners_text,
+                        parse_mode="HTML",
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Failed to send auto-draw results to admin {admin_id}: {e}"
+                    )
+
+        # Сбрасываем дату розыгрыша в конфиге, чтобы не повторять его
+        CONFIG["broadcast_date"] = ""
+        save_config(CONFIG)
+        logger.info("Auto-draw completed. broadcast_date cleared in config.json.")
 
 
 scheduler = Scheduler()
+
+

@@ -13,32 +13,12 @@ from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from config import ADMIN_IDS, CONFIG
+from config import ADMIN_IDS, CONFIG, save_config
 from keyboards import get_cancel_keyboard
 from states import AdminStates
 
 router = Router()
 
-CONFIG_PATH = Path("config.json")
-
-
-def save_config():
-    """
-    Сохранить config.json.
-    """
-
-    with open(
-        CONFIG_PATH,
-        "w",
-        encoding="utf-8",
-    ) as f:
-
-        json.dump(
-            CONFIG,
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
 
 
 @router.callback_query(F.data == "admin_texts")
@@ -98,7 +78,7 @@ async def save_start(
 
     CONFIG["start_text"] = message.html_text
 
-    save_config()
+    save_config(CONFIG)
 
     await state.clear()
 
@@ -133,7 +113,7 @@ async def save_instruction(
 
     CONFIG["instruction_text"] = message.html_text
 
-    save_config()
+    save_config(CONFIG)
 
     await state.clear()
 
@@ -168,7 +148,7 @@ async def save_thanks(
 
     CONFIG["thank_you_text"] = message.html_text
 
-    save_config()
+    save_config(CONFIG)
 
     await state.clear()
 
@@ -203,7 +183,7 @@ async def save_url(
 
     CONFIG["presave_url"] = message.text.strip()
 
-    save_config()
+    save_config(CONFIG)
 
     await state.clear()
 
@@ -238,7 +218,7 @@ async def save_broadcast(
 
     CONFIG["broadcast_text"] = message.html_text
 
-    save_config()
+    save_config(CONFIG)
 
     await state.clear()
 

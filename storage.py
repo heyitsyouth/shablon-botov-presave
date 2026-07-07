@@ -40,6 +40,8 @@ except ImportError:
     get_session = None
 
 
+import asyncio
+
 class Storage:
 
     def __init__(self):
@@ -61,11 +63,21 @@ class Storage:
             telegram_file.file_path
         )
 
-        image = Image.open(file_bytes)
-
-        image = self._prepare(image)
-
         now = datetime.now()
+        filename = (
+            f"{user_id}_"
+            f"{now:%Y%m%d_%H%M%S}.jpg"
+        )
+
+        if self.use_s3:
+            buffer = await asyncio.to_thread(
+                self._process_and_save_buffer,
+                file_bytes,
+            )
+            return await self._save_s3(
+                buffer,
+                filename,
+            )
 
         folder = (
             SCREENSHOTS_DIR
@@ -79,20 +91,9 @@ class Storage:
             exist_ok=True,
         )
 
-        filename = (
-            f"{user_id}_"
-            f"{now:%Y%m%d_%H%M%S}.jpg"
-        )
-
-        if self.use_s3:
-
-            return await self._save_s3(
-                image,
-                filename,
-            )
-
-        return self._save_local(
-            image,
+        return await asyncio.to_thread(
+            self._process_and_save_local,
+            file_bytes,
             folder,
             filename,
         )
@@ -128,13 +129,14 @@ class Storage:
 
         return image
 
-    def _save_local(
+    def _process_and_save_local(
         self,
-        image: Image.Image,
+        file_bytes: io.BytesIO,
         folder: Path,
         filename: str,
     ) -> str:
-
+        image = Image.open(file_bytes)
+        image = self._prepare(image)
         path = folder / filename
 
         image.save(
@@ -151,9 +153,25 @@ class Storage:
 
         return str(path)
 
+    def _process_and_save_buffer(
+        self,
+        file_bytes: io.BytesIO,
+    ) -> io.BytesIO:
+        image = Image.open(file_bytes)
+        image = self._prepare(image)
+        buffer = io.BytesIO()
+        image.save(
+            buffer,
+            format="JPEG",
+            quality=90,
+            optimize=True,
+        )
+        buffer.seek(0)
+        return buffer
+
     async def _save_s3(
         self,
-        image: Image.Image,
+        buffer: io.BytesIO,
         filename: str,
     ) -> str:
 
@@ -161,17 +179,6 @@ class Storage:
             raise RuntimeError(
                 "aiobotocore is not installed."
             )
-
-        buffer = io.BytesIO()
-
-        image.save(
-            buffer,
-            format="JPEG",
-            quality=90,
-            optimize=True,
-        )
-
-        buffer.seek(0)
 
         session = get_session()
 
@@ -199,3 +206,4 @@ class Storage:
 
 
 storage = Storage()
+

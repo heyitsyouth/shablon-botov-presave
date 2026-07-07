@@ -88,3 +88,53 @@ def get_admin_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=keyboard
     )
+
+
+def get_cancel_keyboard() -> InlineKeyboardMarkup:
+
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text="❌ Отменить",
+                callback_data="cancel",
+            )
+        ]
+    ]
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=keyboard
+    )
+
+
+def get_subscription_keyboard() -> InlineKeyboardMarkup:
+
+    from config import REQUIRED_CHANNELS
+
+    keyboard = []
+
+    for channel in REQUIRED_CHANNELS:
+
+        username = channel.get("username")
+
+        title = channel.get("title", "Канал")
+
+        if username:
+
+            keyboard.append([
+                InlineKeyboardButton(
+                    text=f"Подписаться на {title}",
+                    url=f"https://t.me/{username}",
+                )
+            ])
+
+    keyboard.append([
+        InlineKeyboardButton(
+            text="Я подписался",
+            callback_data="check_subscription",
+        )
+    ])
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=keyboard
+    )
+

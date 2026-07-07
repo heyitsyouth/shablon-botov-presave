@@ -115,6 +115,9 @@ async def process_broadcast(
 
             failed += 1
 
+        # Throttling: задержка 0.04 сек (~25 сообщений/сек), чтобы избежать банов и лимитов Telegram API
+        await asyncio.sleep(0.04)
+
         if index % 100 == 0:
 
             await status.edit_text(
@@ -145,5 +148,6 @@ async def process_broadcast(
         f"🚫 Заблокировали бота: {blocked}"
 
     )
+
 
     await state.clear()

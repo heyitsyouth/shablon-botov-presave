@@ -54,6 +54,48 @@ async def start(
     )
 
 
+@router.callback_query(F.data == "send_screenshot")
+async def send_screenshot_callback(
+    callback: CallbackQuery,
+    state: FSMContext,
+):
+    """
+    Пользователь нажал "Отправить скриншот".
+    """
+
+    if CONFIG.get("check_subscription", False):
+
+        ok = await check_subscription(
+            callback.bot,
+            callback.from_user.id,
+        )
+
+        if not ok:
+
+            await callback.message.answer(
+                "❌\n\n"
+                "Сначала подпишитесь "
+                "на обязательные каналы, "
+                "после чего нажмите кнопку "
+                "\"Я подписался\".",
+                reply_markup=get_subscription_keyboard(),
+            )
+
+            await callback.answer()
+
+            return
+
+    await callback.message.answer(
+        CONFIG.get("instruction_text", "Отправьте скриншот.")
+    )
+
+    await state.set_state(
+        UserStates.waiting_screenshot
+    )
+
+    await callback.answer()
+
+
 @router.callback_query(F.data == "open_presave")
 async def open_presave(
     callback: CallbackQuery,
@@ -109,7 +151,7 @@ async def open_presave(
     )
 
     await state.set_state(
-        UserStates.waiting_for_screenshot
+        UserStates.waiting_screenshot
     )
 
     await callback.answer()
@@ -152,7 +194,8 @@ async def recheck_subscription(
     )
 
     await state.set_state(
-        UserStates.waiting_for_screenshot
+        UserStates.waiting_screenshot
     )
 
     await callback.answer()
+

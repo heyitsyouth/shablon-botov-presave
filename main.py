@@ -13,7 +13,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
-from config import BOT_TOKEN
+from config import BOT_TOKEN, REDIS_URL
 from database import db
 from scheduler import scheduler
 
@@ -25,6 +25,7 @@ from handlers.admin_menu import router as admin_menu_router
 from handlers.admin_texts import router as admin_texts_router
 from handlers.admin_draw import router as admin_draw_router
 from handlers.admin_broadcast import router as admin_broadcast_router
+from handlers.admin_export import router as admin_export_router
 
 
 logging.basicConfig(
@@ -42,7 +43,24 @@ async def main():
         ),
     )
 
-    dp = Dispatcher()
+    # Настройка FSM-хранилища (Redis для 50k+ нагрузки, MemoryStorage как фолбек)
+    if REDIS_URL:
+        try:
+            from aiogram.fsm.storage.redis import RedisStorage
+            from redis.asyncio import Redis
+            redis_client = Redis.from_url(REDIS_URL)
+            storage = RedisStorage(redis_client)
+            logging.info("FSM storage: Redis")
+        except Exception as e:
+            logging.error(f"Failed to load RedisStorage, falling back to MemoryStorage: {e}")
+            from aiogram.fsm.storage.memory import MemoryStorage
+            storage = MemoryStorage()
+    else:
+        from aiogram.fsm.storage.memory import MemoryStorage
+        storage = MemoryStorage()
+        logging.info("FSM storage: Memory")
+
+    dp = Dispatcher(storage=storage)
 
     #
     # Пользовательские роутеры
@@ -60,6 +78,7 @@ async def main():
     dp.include_router(admin_texts_router)
     dp.include_router(admin_draw_router)
     dp.include_router(admin_broadcast_router)
+    dp.include_router(admin_export_router)
 
     #
     # База данных
@@ -71,7 +90,7 @@ async def main():
     # Планировщик
     #
 
-    await scheduler.start()
+    await scheduler.start(bot)
 
     logging.info("Bot started.")
 
@@ -86,6 +105,7 @@ async def main():
         await db.close()
 
         await bot.session.close()
+
 
 
 if __name__ == "__main__":

@@ -15,22 +15,10 @@ from typing import List
 from database import db
 
 
-async def draw_winners(count: int) -> List[dict]:
+def choose_winners(participants: List[dict], count: int) -> List[dict]:
     """
-    Выбирает случайных победителей.
-
-    Parameters
-    ----------
-    count : int
-        Количество победителей.
-
-    Returns
-    -------
-    list
-        Список победителей.
+    Выбирает случайных победителей из списка участников.
     """
-
-    participants = await db.get_all()
 
     if not participants:
         return []
@@ -39,9 +27,19 @@ async def draw_winners(count: int) -> List[dict]:
         return list(participants)
 
     return random.sample(
-        list(participants),
+        participants,
         count,
     )
+
+
+async def draw_winners(count: int) -> List[dict]:
+    """
+    Выбирает случайных победителей из БД.
+    """
+
+    participants = await db.get_all_participants()
+
+    return choose_winners(participants, count)
 
 
 async def participant_count() -> int:
@@ -49,7 +47,9 @@ async def participant_count() -> int:
     Возвращает количество участников.
     """
 
-    return await db.count()
+    stats = await db.statistics()
+
+    return stats.get("total", 0)
 
 
 async def get_statistics() -> dict:
@@ -58,3 +58,4 @@ async def get_statistics() -> dict:
     """
 
     return await db.statistics()
+
