@@ -28,7 +28,7 @@ async def texts_menu(callback: CallbackQuery):
         return
 
     text = (
-        "📝 <b>Редактирование текстов</b>\n\n"
+        "📝 <b>Редактирование текстов и каналов</b>\n\n"
 
         "Отправьте:\n\n"
 
@@ -40,8 +40,13 @@ async def texts_menu(callback: CallbackQuery):
 
         "4 — ссылка на пресейв\n"
 
-        "5 — текст рассылки"
+        "5 — текст рассылки\n"
+
+        "6 — юзернейм обязательного канала (без @)\n"
+
+        "7 — название обязательного канала"
     )
+
 
     await callback.message.answer(
         text,
@@ -225,3 +230,105 @@ async def save_broadcast(
     await message.answer(
         "✅ Текст рассылки обновлён."
     )
+
+
+@router.message(F.text == "6")
+async def edit_channel_username(
+    message: Message,
+    state: FSMContext,
+):
+
+    if message.from_user.id not in ADMIN_IDS:
+        return
+
+    await state.set_state(
+        AdminStates.waiting_channel_username
+    )
+
+    await message.answer(
+        "Пришлите юзернейм обязательного канала (без знака @).\n"
+        "Например: <code>aviasales</code>",
+        parse_mode="HTML",
+        reply_markup=get_cancel_keyboard(),
+    )
+
+
+@router.message(AdminStates.waiting_channel_username)
+async def save_channel_username(
+    message: Message,
+    state: FSMContext,
+):
+
+    username = message.text.replace("@", "").strip()
+
+    CONFIG["channel_username"] = username
+
+    save_config(CONFIG)
+
+    await state.clear()
+
+    await message.answer(
+        f"✅ Юзернейм канала обновлён на: @{username}"
+    )
+
+    # Вернем админку для удобства
+    from keyboards import get_admin_keyboard
+    from database import db
+    stats = await db.statistics()
+    await message.answer(
+        "⚙️ <b>Панель администратора</b>",
+        parse_mode="HTML",
+        reply_markup=get_admin_keyboard(),
+    )
+
+
+@router.message(F.text == "7")
+async def edit_channel_title(
+    message: Message,
+    state: FSMContext,
+):
+
+    if message.from_user.id not in ADMIN_IDS:
+        return
+
+    await state.set_state(
+        AdminStates.waiting_channel_title
+    )
+
+    await message.answer(
+        "Пришлите название обязательного канала.\n"
+        "Например: <code>Aviasales</code>",
+        parse_mode="HTML",
+        reply_markup=get_cancel_keyboard(),
+    )
+
+
+@router.message(AdminStates.waiting_channel_title)
+async def save_channel_title(
+    message: Message,
+    state: FSMContext,
+):
+
+    title = message.text.strip()
+
+    CONFIG["channel_title"] = title
+
+    save_config(CONFIG)
+
+    await state.clear()
+
+    await message.answer(
+        f"✅ Название канала обновлено на: <b>{title}</b>",
+        parse_mode="HTML"
+    )
+
+    # Вернем админку для удобства
+    from keyboards import get_admin_keyboard
+    from database import db
+    stats = await db.statistics()
+    await message.answer(
+        "⚙️ <b>Панель администратора</b>",
+        parse_mode="HTML",
+        reply_markup=get_admin_keyboard(),
+    )
+

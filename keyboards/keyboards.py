@@ -76,6 +76,13 @@ def get_admin_keyboard() -> InlineKeyboardMarkup:
 
         [
             InlineKeyboardButton(
+                text="📋 Просмотр настроек",
+                callback_data="admin_view_config",
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
                 text=status_text,
                 callback_data="admin_toggle_sub",
             )
@@ -135,24 +142,20 @@ def get_cancel_keyboard() -> InlineKeyboardMarkup:
 
 def get_subscription_keyboard() -> InlineKeyboardMarkup:
 
-    from config import REQUIRED_CHANNELS
+    username = CONFIG.get("channel_username", "aviasales")
+
+    title = CONFIG.get("channel_title", "Aviasales")
 
     keyboard = []
 
-    for channel in REQUIRED_CHANNELS:
+    if username:
 
-        username = channel.get("username")
-
-        title = channel.get("title", "Канал")
-
-        if username:
-
-            keyboard.append([
-                InlineKeyboardButton(
-                    text=f"Подписаться на {title}",
-                    url=f"https://t.me/{username}",
-                )
-            ])
+        keyboard.append([
+            InlineKeyboardButton(
+                text=f"Подписаться на {title}",
+                url=f"https://t.me/{username.replace('@', '').strip()}",
+            )
+        ])
 
     keyboard.append([
         InlineKeyboardButton(
@@ -164,4 +167,5 @@ def get_subscription_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=keyboard
     )
+
 

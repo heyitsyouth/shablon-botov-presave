@@ -34,6 +34,11 @@ class AdminStates(StatesGroup):
 
     waiting_broadcast_text = State()
 
+    waiting_channel_username = State()
+
+    waiting_channel_title = State()
+
+
     # -------------------------
     # Розыгрыш
     # -------------------------

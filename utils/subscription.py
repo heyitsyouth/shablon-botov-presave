@@ -45,37 +45,38 @@ async def check_subscription(
     if not CONFIG.get("check_subscription", False):
         return True
 
-    for channel in REQUIRED_CHANNELS:
+    username = CONFIG.get("channel_username")
 
-        try:
+    if not username:
+        return True
 
-            chat = channel["id"]
+    try:
 
-            if chat is None:
-                chat = f"@{channel['username']}"
+        chat = f"@{username.replace('@', '').strip()}"
 
-            member = await bot.get_chat_member(
-                chat,
-                user_id,
-            )
+        member = await bot.get_chat_member(
+            chat,
+            user_id,
+        )
 
-            if member.status not in ALLOWED_STATUSES:
-                return False
-
-        except TelegramBadRequest:
-
-            logger.exception(
-                "Unable to check subscription."
-            )
-
+        if member.status not in ALLOWED_STATUSES:
             return False
 
-        except Exception:
+    except TelegramBadRequest:
 
-            logger.exception(
-                "Unexpected subscription error."
-            )
+        logger.exception(
+            "Unable to check subscription."
+        )
 
-            return False
+        return False
+
+    except Exception:
+
+        logger.exception(
+            "Unexpected subscription error."
+        )
+
+        return False
 
     return True
+

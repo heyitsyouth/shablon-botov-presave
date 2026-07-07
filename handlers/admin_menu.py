@@ -97,3 +97,39 @@ async def admin_toggle_sub_callback(callback: CallbackQuery):
     )
 
 
+@router.callback_query(F.data == "admin_view_config")
+async def admin_view_config_callback(callback: CallbackQuery):
+
+    if not is_admin(callback.from_user.id):
+        return
+
+    from config import CONFIG
+
+    check_sub = CONFIG.get("check_subscription", False)
+
+    status_sub = "🟢 ВКЛЮЧЕНА" if check_sub else "🔴 ВЫКЛЮЧЕНА"
+
+    text = (
+        "📋 <b>Текущие настройки розыгрыша:</b>\n\n"
+        f"🔗 <b>Пресейв-ссылка:</b>\n<code>{CONFIG.get('presave_url', 'Не задана')}</code>\n\n"
+        f"📢 <b>Обязательный канал:</b>\n"
+        f"Название: <b>{CONFIG.get('channel_title', 'Не задано')}</b>\n"
+        f"Юзернейм: @{CONFIG.get('channel_username', 'Не задан')}\n"
+        f"Статус проверки: <b>{status_sub}</b>\n\n"
+        f"📝 <b>Стартовый текст:</b>\n{CONFIG.get('start_text', 'Не задан')}\n\n"
+        f"ℹ️ <b>Инструкция:</b>\n{CONFIG.get('instruction_text', 'Не задана')}\n\n"
+        f"💖 <b>Текст благодарности:</b>\n{CONFIG.get('thank_you_text', 'Не задан')}\n\n"
+        f"💬 <b>Текст рассылки:</b>\n{CONFIG.get('broadcast_text', 'Не задан')}\n\n"
+        f"📅 <b>Дата авто-розыгрыша:</b>\n{CONFIG.get('broadcast_date', 'Не задана')}\n"
+        f"🏆 <b>Количество победителей:</b> {CONFIG.get('winners_count', 1)}"
+    )
+
+    await callback.message.answer(
+        text,
+        parse_mode="HTML",
+    )
+
+    await callback.answer()
+
+
+

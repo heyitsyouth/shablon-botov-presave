@@ -166,7 +166,12 @@ DEFAULT_CONFIG = {
     "winners_count": 1,
 
     "auto_draw_after_broadcast": True,
+
+    "channel_username": "aviasales",
+
+    "channel_title": "Aviasales",
 }
+
 
 # =========================================================
 # Работа с config.json
