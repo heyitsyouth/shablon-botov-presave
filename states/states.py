@@ -38,6 +38,9 @@ class AdminStates(StatesGroup):
 
     waiting_channel_title = State()
 
+    waiting_new_admin_id = State()
+
+
 
     # -------------------------
     # Розыгрыш

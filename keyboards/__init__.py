@@ -3,6 +3,7 @@ from .keyboards import (
     get_cancel_keyboard,
     get_start_keyboard,
     get_subscription_keyboard,
+    get_manage_admins_keyboard,
 )
 
 __all__ = [
@@ -10,5 +11,7 @@ __all__ = [
     "get_cancel_keyboard",
     "get_start_keyboard",
     "get_subscription_keyboard",
+    "get_manage_admins_keyboard",
 ]
+
 

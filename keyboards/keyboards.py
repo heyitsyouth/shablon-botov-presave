@@ -90,6 +90,13 @@ def get_admin_keyboard() -> InlineKeyboardMarkup:
 
         [
             InlineKeyboardButton(
+                text="🔑 Управление админами",
+                callback_data="admin_manage_admins",
+            )
+        ],
+
+        [
+            InlineKeyboardButton(
                 text="📝 Тексты",
                 callback_data="admin_texts",
             )
@@ -121,6 +128,41 @@ def get_admin_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=keyboard
     )
+
+
+def get_manage_admins_keyboard(current_admin_id: int) -> InlineKeyboardMarkup:
+
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text="➕ Добавить админа",
+                callback_data="admin_add_admin_start",
+            )
+        ]
+    ]
+
+    for admin_id in CONFIG.get("admin_ids", []):
+
+        if admin_id != current_admin_id:
+
+            keyboard.append([
+                InlineKeyboardButton(
+                    text=f"🗑️ Удалить ID: {admin_id}",
+                    callback_data=f"admin_del_admin:{admin_id}",
+                )
+            ])
+
+    keyboard.append([
+        InlineKeyboardButton(
+            text="⬅️ Назад в меню",
+            callback_data="cancel",
+        )
+    ])
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=keyboard
+    )
+
 
 
 
